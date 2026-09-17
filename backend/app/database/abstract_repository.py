@@ -57,6 +57,7 @@ class AbstractRepository[T, PK](ABC):
         async with get_db_session() as session:
             obj = await session.get(self.model, obj_id)
             if not obj:
+                # command does not exist (not found)
                 raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
             return obj
 

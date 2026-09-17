@@ -53,6 +53,7 @@ async def create_command(
     :param commands: injected Command repository.
     :return: The newly created command.
     """
+
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
     created_command = await commands.create(
         {
@@ -80,9 +81,25 @@ async def update_command(
     :raises HTTPException: 422 if the repository rejects the update, e.g. a value of the wrong type or a
         ``type_`` that is not an existing main command. A rejected update leaves the command unchanged.
     """
+    # get command
+    try:
+        cur_command = await commands.get_by_id(command_id)  # type SQLModel
+    except Exception as err:
+        raise HTTPException(status_code=404, detail="command not found") from err
+
+    # update command
+    try:
+        updates = request.model_dump(exclude_none=True, exclude_unset=True)
+        for field, value in updates.items():
+            setattr(cur_command, field, value)
+
+        await commands.update(command_id, updates)
+    except Exception as err:
+        raise HTTPException(status_code=422) from err
+
     # TODO: (STEP 3) Implement this stub!
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
-    return CommandResponse(data=None)
+    return CommandResponse(data=cur_command)
 
 
 @commands_router.delete("/{command_id}")
