@@ -7,6 +7,7 @@ from fastapi.exceptions import HTTPException
 from app.api.schemas.requests import CreateCommandRequest, UpdateCommandRequest
 from app.api.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
 from app.database.dal import DAL
+from app.database.enums import CommandStatus
 from app.database.repositories import CommandsRepository
 
 commands_router = APIRouter(tags=["Commands"])
@@ -55,10 +56,22 @@ async def create_command(
     """
 
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
+
+    history_repo = DAL.get_repo(DAL.command_history)()
+
     created_command = await commands.create(
         {
             "type_": request.type_,
             "params": request.params,
+        }
+    )
+
+    await history_repo.create(
+        {
+            "command_id": created_command.id,
+            "type_": request.type_,
+            "params": request.params,
+            "status": CommandStatus.PENDING,
         }
     )
     return CommandResponse(data=created_command)
@@ -93,13 +106,24 @@ async def update_command(
         for field, value in updates.items():
             setattr(cur_command, field, value)
 
-        await commands.update(command_id, updates)
+        updated_command = await commands.update(command_id, updates)
     except Exception as err:
         raise HTTPException(status_code=422) from err
 
     # TODO: (STEP 3) Implement this stub!
+
+    history_repo = DAL.get_repo(DAL.command_history)()
+    await history_repo.create(
+        {
+            "command_id": command_id,
+            "status": updated_command.status,
+            "type_": updated_command.type_,
+            "params": updated_command.params,
+        }
+    )
+
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
-    return CommandResponse(data=cur_command)
+    return CommandResponse(status=cur_command.status, data=cur_command)
 
 
 @commands_router.delete("/{command_id}")
@@ -115,6 +139,18 @@ async def delete_command(
     :return: Confirmation message with the deleted command ID.
     """
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
+
+    history_repo = DAL.get_repo(DAL.command_history)()
+    cur_command = await commands.get_by_id(command_id)
+    await history_repo.create(
+        {
+            "command_id": command_id,
+            "status": cur_command.status,
+            "type_": cur_command.type_,
+            "params": cur_command.params,
+        }
+    )
+
     try:
         await commands.get_by_id(command_id)
     except ValueError as e:
