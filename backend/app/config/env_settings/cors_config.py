@@ -10,6 +10,10 @@ class CORSConfig(BaseSettings):
     """
 
     model_config = SettingsConfigDict(env_prefix="CORS_")
+    allow_origins: list[str] = []
+    allow_method: list[str] = []
+    allow_headers: list[str] = []
+    allow_credentials: bool = False
     # TODO: (STEP 5) Implement this stub!
 
 
@@ -24,4 +28,8 @@ def add_cors_middleware(app: FastAPI) -> None:
     print(f"CORSConfig not implemented. ({cors_settings})")
     app.add_middleware(
         CORSMiddleware,
+        allow_origins=cors_settings.allow_origins,
+        allow_methods=cors_settings.allow_method,
+        allow_headers=cors_settings.allow_headers,
+        allow_credentials=cors_settings.allow_credentials,
     )
