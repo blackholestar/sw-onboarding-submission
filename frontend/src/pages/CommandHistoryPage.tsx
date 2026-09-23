@@ -45,7 +45,7 @@ function CommandHistoryPage() {
       <div><SetCommandIdButton setCommandId={setCommandId} /></div>
       <div>Command ID: {commandId}
       <Table
-        data={history.data == undefined ? testCommandHistory : history.data}
+        data={history.data == undefined ? [] : history.data}
         columns={columns}
 
       />
