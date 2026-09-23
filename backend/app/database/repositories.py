@@ -31,7 +31,6 @@ class CommandHistoryRepository(AbstractRepository[CommandHistory, UUID]):
         """
         Get the entire history of a command by its UUID, sorted by latest first.
         """
-        # print("Step 1 running")
         commands: list[CommandHistory] = await self.get_all_by(command_id=command_id)
         cur_command_history: list[CommandHistory] = []
 

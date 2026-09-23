@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
 from app.api.schemas.requests import CreateCommandRequest, UpdateCommandRequest
-from app.api.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
+from app.api.schemas.responses import CommandItem, CommandResponse, CommandsResponse, DeleteCommandResponse
 from app.database.dal import DAL
 from app.database.enums import CommandStatus
 from app.database.repositories import CommandsRepository
@@ -23,7 +23,7 @@ async def get_commands(commands: CommandsRepo) -> CommandsResponse:
     :param commands: injected Command repository.
     :return: All command entries.
     """
-    return CommandsResponse(data=await commands.get_all())
+    return CommandsResponse(data=[CommandItem.model_validate(command) for command in await commands.get_all()])
 
 
 @commands_router.get("/{command_id}")
@@ -39,7 +39,7 @@ async def get_command(command_id: UUID, commands: CommandsRepo) -> CommandRespon
         command = await commands.get_by_id(command_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    return CommandResponse(data=command)
+    return CommandResponse(data=CommandItem.model_validate(command))
 
 
 @commands_router.post("/")
@@ -69,12 +69,13 @@ async def create_command(
     await history_repo.create(
         {
             "command_id": created_command.id,
-            "type_": request.type_,
+            # "type_": request.type_,
             "params": request.params,
             "status": CommandStatus.PENDING,
         }
     )
-    return CommandResponse(data=created_command)
+
+    return CommandResponse(data=CommandItem.model_validate(created_command))
 
 
 @commands_router.patch("/{command_id}")
@@ -117,13 +118,13 @@ async def update_command(
         {
             "command_id": command_id,
             "status": updated_command.status,
-            "type_": updated_command.type_,
+            # "type_": updated_command.type_,
             "params": updated_command.params,
         }
     )
 
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
-    return CommandResponse(status=cur_command.status, data=cur_command)
+    return CommandResponse(data=CommandItem.model_validate(cur_command))
 
 
 @commands_router.delete("/{command_id}")
@@ -146,7 +147,7 @@ async def delete_command(
         {
             "command_id": command_id,
             "status": cur_command.status,
-            "type_": cur_command.type_,
+            # "type_": cur_command.type_,
             "params": cur_command.params,
         }
     )

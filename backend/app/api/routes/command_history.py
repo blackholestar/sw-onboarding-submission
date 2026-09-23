@@ -25,7 +25,9 @@ async def get_command_history(command_id: UUID, command_history: CommandHistoryR
     """
     command_history_response = await command_history.get_history_by_id(command_id)
     if len(command_history_response) == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="command not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="command not found (backend command_history.py)"
+        )
 
     # TODO: (STEP 2) Implement this stub!
     return CommandHistoryResponse(data=command_history_response)
