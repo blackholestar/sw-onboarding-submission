@@ -9,26 +9,22 @@ export function useCommandHistory(
   // This hook should use React Query and return CommandHistory[].
   // Define the refetch interval as a local constant.
 
+  return useQuery({
+    queryKey: ["command-history", commandId],
+    queryFn: async () => {
+      const response = await fetch(`/api/commands/${commandId}/history`, {
+        cache: "no-store",
+      });
 
-  return useQuery (
-    {
-      queryKey: ["command-history", commandId],
-      queryFn: async () => {
-
-        const response = await fetch(`/api/commands/${commandId}/history`,
-          {cache: "no-store"} );
-
-        if (!response.ok) {
-          throw Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const data = await response.json();
-        return data.data as CommandHistory[];
-
-      },
-      refetchInterval: 2000,
-      enabled: commandId !== ""
-    }
-  )
+      if (!response.ok) {
+        throw Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.data as CommandHistory[];
+    },
+    refetchInterval: 2000,
+    enabled: commandId !== "",
+  });
 
   //throw new Error("not implemented");
 }
