@@ -25,11 +25,10 @@ function CommandHistoryPage() {
   let [commandId, setCommandId] = useState<string>("");
 
 
+  const {data: history, error, isError} = useCommandHistory(commandId);
 
-  const history = useCommandHistory(commandId);
 
   const testCommandHistory: CommandHistory[] = [{id: 0, command_id: 0, status: "test status", params: "test params", created_at: "test created at"}]
-
 
 
 
@@ -43,9 +42,10 @@ function CommandHistoryPage() {
   return (
     <div className="flex flex-col items-center justify-center">
       <div><SetCommandIdButton setCommandId={setCommandId} /></div>
-      <div>Command ID: {commandId}
+      <div>
+        <div>Command ID: {commandId}</div>
       <Table
-        data={history.data == undefined ? [] : history.data}
+        data={history == undefined ? [] : history}
         columns={columns}
 
       />

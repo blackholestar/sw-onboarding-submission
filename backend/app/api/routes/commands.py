@@ -8,11 +8,12 @@ from app.api.schemas.requests import CreateCommandRequest, UpdateCommandRequest
 from app.api.schemas.responses import CommandItem, CommandResponse, CommandsResponse, DeleteCommandResponse
 from app.database.dal import DAL
 from app.database.enums import CommandStatus
-from app.database.repositories import CommandsRepository
+from app.database.repositories import CommandHistoryRepository, CommandsRepository
 
 commands_router = APIRouter(tags=["Commands"])
 
 CommandsRepo = Annotated[CommandsRepository, Depends(DAL.get_repo(DAL.commands))]
+CommandHistoryRepo = Annotated[CommandHistoryRepository, Depends(DAL.get_repo(DAL.command_history))]
 
 
 @commands_router.get("/")
@@ -44,8 +45,7 @@ async def get_command(command_id: UUID, commands: CommandsRepo) -> CommandRespon
 
 @commands_router.post("/")
 async def create_command(
-    request: CreateCommandRequest,
-    commands: CommandsRepo,
+    request: CreateCommandRequest, commands: CommandsRepo, history_repo: CommandHistoryRepo
 ) -> CommandResponse:
     """
     Create a new command entry with status set to pending.
@@ -57,7 +57,7 @@ async def create_command(
 
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
 
-    history_repo = DAL.get_repo(DAL.command_history)()
+    # history_repo = DAL.get_repo(DAL.command_history)()
 
     created_command = await commands.create(
         {
@@ -80,9 +80,7 @@ async def create_command(
 
 @commands_router.patch("/{command_id}")
 async def update_command(
-    command_id: UUID,
-    request: UpdateCommandRequest,
-    commands: CommandsRepo,
+    command_id: UUID, request: UpdateCommandRequest, commands: CommandsRepo, history_repo: CommandHistoryRepo
 ) -> CommandResponse:
     """
     Partially update a command's status, type, or parameters.
@@ -113,7 +111,7 @@ async def update_command(
 
     # TODO: (STEP 3) Implement this stub!
 
-    history_repo = DAL.get_repo(DAL.command_history)()
+    # history_repo = DAL.get_repo(DAL.command_history)()
     await history_repo.create(
         {
             "command_id": command_id,
@@ -129,8 +127,7 @@ async def update_command(
 
 @commands_router.delete("/{command_id}")
 async def delete_command(
-    command_id: UUID,
-    commands: CommandsRepo,
+    command_id: UUID, commands: CommandsRepo, history_repo: CommandHistoryRepo
 ) -> DeleteCommandResponse:
     """
     Delete a command by ID.
@@ -141,8 +138,12 @@ async def delete_command(
     """
     # TODO: (STEP 4) Wire CommandHistory table appending into this route!
 
-    history_repo = DAL.get_repo(DAL.command_history)()
-    cur_command = await commands.get_by_id(command_id)
+    # history_repo = DAL.get_repo(DAL.command_history)()
+
+    try:
+        cur_command = await commands.get_by_id(command_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     await history_repo.create(
         {
             "command_id": command_id,
@@ -152,9 +153,5 @@ async def delete_command(
         }
     )
 
-    try:
-        await commands.get_by_id(command_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
     await commands.delete_by_id(command_id)
     return DeleteCommandResponse(message=f"Command {command_id} deleted successfully")
