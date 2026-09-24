@@ -2,7 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 import type { CommandHistory } from "../utils/types";
 import { useCommandHistory } from "../hooks/useCommandHistory";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const columnHelper = createColumnHelper<CommandHistory>();
 
@@ -22,14 +22,10 @@ const columns = [
  */
 function CommandHistoryPage() {
 
-  let [commandId, setCommandId] = useState<string>("");
+  const [commandId, setCommandId] = useState<string>("");
 
 
-  const {data: history, error, isError} = useCommandHistory(commandId);
-
-
-  const testCommandHistory: CommandHistory[] = [{id: 0, command_id: 0, status: "test status", params: "test params", created_at: "test created at"}]
-
+  const {data: history} = useCommandHistory(commandId);
 
 
   // TODO: (STEP 8) Fetch the command history with useCommandHistory and pass the resulting
@@ -60,7 +56,7 @@ type SetCommandIdButtonProps = {
   setCommandId: (commandId: string) => void
 }
 function SetCommandIdButton({setCommandId}: SetCommandIdButtonProps) {
-  let [commandId, setCommandIdLocal] = useState<string>("");
+  const [commandId, setCommandIdLocal] = useState<string>("");
   return (
     <div className="border b-4 border-blue-800 rounded-md p-3">
       <input
